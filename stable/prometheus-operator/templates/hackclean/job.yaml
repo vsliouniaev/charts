@@ -1,0 +1,43 @@
+{{- if and .Values.hackclean }}
+{{ $component := hackclean }}
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ template "prometheus-operator.fullname" . }}-{{ $component }}
+  namespace: {{ $.Release.Namespace }}
+  annotations:
+    "helm.sh/hook": pre-install,pre-upgrade
+    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
+  labels:
+    app: {{ template "prometheus-operator.name" . }}-{{ $component }}
+{{ include "prometheus-operator.labels" . | indent 4 }}
+spec:
+  template:
+    metadata:
+      name: {{ template "prometheus-operator.fullname" . }}-{{ $component }}
+      labels:
+        app: {{ template "prometheus-operator.name" . }}-{{ $component }}
+{{ include "prometheus-operator.labels" . | indent 8 }}
+    spec:
+      serviceAccountName: {{ template "prometheus-operator.fullname" . }}-{{ $component }}
+      containers:
+        - name: kubectl
+          image: "k8s.gcr.io/hyperkube:v1.12.1"
+          imagePullPolicy: IfNotPresent
+          command:
+          - /bin/sh
+          - -c
+          - >
+              kubectl delete alertmanager   --all;
+              kubectl delete prometheus     --all;
+              kubectl delete prometheusrule --all;
+              kubectl delete servicemonitor --all;
+              sleep 10;
+              kubectl delete crd alertmanagers.monitoring.coreos.com;
+              kubectl delete crd prometheuses.monitoring.coreos.com;
+              kubectl delete crd prometheusrules.monitoring.coreos.com;
+              kubectl delete crd servicemonitors.monitoring.coreos.com;
+              kubectl delete crd podmonitors.monitoring.coreos.com;
+              kubectl delete crd thanosrulers.monitoring.coreos.com;
+      restartPolicy: OnFailure
+{{- end }}
