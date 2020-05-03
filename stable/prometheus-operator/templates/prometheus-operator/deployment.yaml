@@ -34,7 +34,6 @@ spec:
           image: "{{ .Values.prometheusOperator.image.repository }}:{{ .Values.prometheusOperator.image.tag }}"
           imagePullPolicy: "{{ .Values.prometheusOperator.image.pullPolicy }}"
           args:
-            - --manage-crds={{ $.Values.prometheusOperator.manageCrds }}
           {{- if .Values.prometheusOperator.kubeletService.enabled }}
             - --kubelet-service={{ .Values.prometheusOperator.kubeletService.namespace }}/{{ template "prometheus-operator.fullname" . }}-kubelet
           {{- end }}
@@ -60,6 +59,15 @@ spec:
             - --config-reloader-image={{ .Values.prometheusOperator.configmapReloadImage.repository }}:{{ .Values.prometheusOperator.configmapReloadImage.tag }}
             - --config-reloader-cpu={{ .Values.prometheusOperator.configReloaderCpu }}
             - --config-reloader-memory={{ .Values.prometheusOperator.configReloaderMemory }}
+    {{- if .Values.prometheusOperator.tlsProxy.enabled }}
+            - --web.enable-tls
+            - --web.cert-file=/cert/cert
+            - --web.key-file=/cert/key
+          volumeMounts:
+            - name: tls-proxy-secret
+              mountPath: /cert
+              readOnly: true
+    {{- end }}
           ports:
             - containerPort: 8080
               name: http
@@ -68,30 +76,6 @@ spec:
           securityContext:
             allowPrivilegeEscalation: false
             readOnlyRootFilesystem: true
-        {{- if .Values.prometheusOperator.tlsProxy.enabled }}
-        - name: tls-proxy
-          image: {{ .Values.prometheusOperator.tlsProxy.image.repository }}:{{ .Values.prometheusOperator.tlsProxy.image.tag }}
-          imagePullPolicy: {{ .Values.prometheusOperator.tlsProxy.image.pullPolicy }}
-          args:
-            - server
-            - --listen=:8443
-            - --target=127.0.0.1:8080
-            - --key=cert/key
-            - --cert=cert/cert
-            - --disable-authentication
-          resources:
-{{ toYaml .Values.prometheusOperator.tlsProxy.resources | indent 12 }}
-          volumeMounts:
-          - name: tls-proxy-secret
-            mountPath: /cert
-            readOnly: true
-          ports:
-            - containerPort: 8443
-              name: https
-          securityContext:
-            allowPrivilegeEscalation: false
-            readOnlyRootFilesystem: true
-        {{- end }}
 {{- if .Values.prometheusOperator.tlsProxy.enabled }}
       volumes:
         - name: tls-proxy-secret

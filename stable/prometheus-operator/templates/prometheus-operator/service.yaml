@@ -32,12 +32,6 @@ spec:
   {{- end }}
 {{- end }}
   ports:
-  - name: http
-    {{- if eq .Values.prometheusOperator.service.type "NodePort" }}
-    nodePort: {{ .Values.prometheusOperator.service.nodePort }}
-    {{- end }}
-    port: 8080
-    targetPort: http
   {{- if .Values.prometheusOperator.tlsProxy.enabled }}
   - name: https
     {{- if eq .Values.prometheusOperator.service.type "NodePort"}}
@@ -45,6 +39,13 @@ spec:
     {{- end }}
     port: 443
     targetPort: https
+  {{- else }}
+  - name: http
+    {{- if eq .Values.prometheusOperator.service.type "NodePort" }}
+    nodePort: {{ .Values.prometheusOperator.service.nodePort }}
+    {{- end }}
+    port: 8080
+    targetPort: http
   {{- end }}
   selector:
     app: {{ template "prometheus-operator.name" . }}-operator

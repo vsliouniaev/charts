@@ -1067,9 +1067,6 @@ prometheus-node-exporter:
 prometheusOperator:
   enabled: true
 
-  # If true prometheus operator will create and update its CRDs on startup
-  manageCrds: true
-
   tlsProxy:
     enabled: true
     image:
@@ -1260,7 +1257,7 @@ prometheusOperator:
   ##
   image:
     repository: quay.io/coreos/prometheus-operator
-    tag: v0.38.1
+    tag: latest
     pullPolicy: IfNotPresent
 
   ## Configmap-reload image to use for reloading configmaps
@@ -1273,7 +1270,7 @@ prometheusOperator:
   ##
   prometheusConfigReloaderImage:
     repository: quay.io/coreos/prometheus-config-reloader
-    tag: v0.38.1
+    tag: latest
 
   ## Set the prometheus config reloader side-car CPU limit
   ##
